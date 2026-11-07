@@ -34,8 +34,8 @@ class RenderTest {
         FontFace sans = FontFace.load(SANS);
         assertEquals(0, sans.glyphId(0xE000));
         assertEquals(0, sans.glyphId(0xE001));
-        BufferedImage a = GlyphRenderer.render(SANS, "", D);
-        BufferedImage b = GlyphRenderer.render(SANS, "", D);
+        BufferedImage a = GlyphRenderer.render(SANS, "\ue000", D);
+        BufferedImage b = GlyphRenderer.render(SANS, "\ue001", D);
         assertTrue(inkCount(a, 0xFF000000) > 0);
         assertEquals(a.getWidth(), b.getWidth());
         assertEquals(a.getHeight(), b.getHeight());

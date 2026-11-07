@@ -58,4 +58,23 @@ class RenderEndToEndTest {
         assertEquals(0, Main.run(new String[]{"fonts/DejaVuSans.ttf", "hi", small.toString(), "32"}, System.err));
         assertTrue(ImageIO.read(small.toFile()).getHeight() < ImageIO.read(big.toFile()).getHeight());
     }
+
+    @Test void missingFontReturnsClearError() {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        assertEquals(1, Main.run(new String[]{"fonts/nope.ttf", "hi", "target/out/nope.png"}, new PrintStream(buf)));
+        assertTrue(buf.toString().contains("no such file"), buf.toString());
+    }
+
+    @Test void createsMissingOutputDirectory() throws IOException {
+        Path out = Path.of("target", "out", "newdir-" + System.nanoTime(), "x.png");
+        assertFalse(Files.exists(out.getParent()));
+        assertEquals(0, Main.run(new String[]{"fonts/DejaVuSans.ttf", "hi", out.toString()}, System.err));
+        assertNotNull(ImageIO.read(out.toFile()));
+    }
+
+    @Test void failedRenderCreatesNoOutputDirectory() {
+        Path out = Path.of("target", "out", "faildir-" + System.nanoTime(), "x.png");
+        assertEquals(1, Main.run(new String[]{"fonts/DejaVuSans.ttf", "hi", out.toString(), "3"}, System.err));
+        assertFalse(Files.exists(out.getParent()));
+    }
 }

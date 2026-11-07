@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
 public final class Main {
@@ -32,10 +33,16 @@ public final class Main {
         try {
             RenderOptions opts = new RenderOptions(size, d.paddingPx(), d.inkArgb(), d.backgroundArgb());
             BufferedImage img = GlyphRenderer.render(Path.of(args[0]), args[1], opts);
-            try (OutputStream out = Files.newOutputStream(Path.of(args[2]))) {
+            Path outPath = Path.of(args[2]);
+            Path parent = outPath.getParent();
+            if (parent != null) Files.createDirectories(parent);
+            try (OutputStream out = Files.newOutputStream(outPath)) {
                 PngWriter.write(img, out);
             }
             return 0;
+        } catch (NoSuchFileException e) {
+            err.println("error: no such file: " + e.getFile());
+            return 1;
         } catch (IOException | IllegalArgumentException e) {
             err.println("error: " + e.getMessage());
             return 1;

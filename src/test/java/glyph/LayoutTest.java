@@ -62,7 +62,7 @@ class LayoutTest {
     void missingCodePointUsesNotdef() throws IOException {
         FontFace f = FontFace.load(Path.of("fonts", "DejaVuSans.ttf"));
         assertEquals(0, f.glyphId(0xE000));
-        Layout l = Layout.of(f, "AB", RenderOptions.defaults());
+        Layout l = Layout.of(f, "A\ue000B", RenderOptions.defaults());
         assertEquals(0, l.glyphs().get(1).gid());
         assertEquals(l.glyphs().get(1).penX() + f.advanceWidth(0) * l.scale(), l.glyphs().get(2).penX(), 1e-9);
     }
