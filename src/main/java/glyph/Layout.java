@@ -18,7 +18,7 @@ public record Layout(List<PlacedGlyph> glyphs, double scale, int width, int heig
             placed.add(new PlacedGlyph(gid, penX));
             penX += face.advanceWidth(gid) * scale;
         }
-        double w = Math.ceil(penX) + opts.paddingPx();
+        double w = Math.max(1, Math.ceil(penX) + opts.paddingPx());
         double h = Math.ceil((face.ascender() - face.descender()) * scale) + 2.0 * opts.paddingPx();
         if (w > MAX_DIM || h > MAX_DIM || w * h > MAX_AREA) {
             throw new IllegalArgumentException("canvas exceeds limits: " + w + "x" + h);

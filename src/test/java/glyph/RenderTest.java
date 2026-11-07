@@ -102,6 +102,17 @@ class RenderTest {
         assertEquals(0, inkCount(img, 0xFF000000));
     }
 
+    @Test void zeroWidthSpaceWithoutPaddingRendersBlankPng() throws IOException {
+        var opts = new RenderOptions(64, 0, 0xFF000000, 0xFFFFFFFF);
+        var out = new ByteArrayOutputStream();
+        GlyphRenderer.renderToPng(SANS, "\u200B", opts, out);
+        BufferedImage img = ImageIO.read(new ByteArrayInputStream(out.toByteArray()));
+        assertNotNull(img);
+        assertEquals(1, img.getWidth());
+        assertTrue(img.getHeight() > 0);
+        assertEquals(img.getHeight(), inkCount(img, opts.backgroundArgb()));
+    }
+
     @Test void renderToPngWritesDecodablePng() throws IOException {
         var out = new ByteArrayOutputStream();
         GlyphRenderer.renderToPng(SANS, "Hello", D, out);
