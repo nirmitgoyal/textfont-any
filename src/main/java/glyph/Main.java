@@ -11,13 +11,18 @@ import java.nio.file.Path;
 public final class Main {
     private Main() {}
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        if (args.length == 1 && args[0].equals("serve")) {
+            glyph.server.Server.main(args);
+            return;
+        }
         System.exit(run(args, System.err));
     }
 
     static int run(String[] args, PrintStream err) {
         if (args.length < 3 || args.length > 4) {
-            err.println("usage: java -jar glyph.jar <font.ttf> \"<text>\" <out.png> [sizePx]");
+            err.println("usage: java -jar glyph.jar serve   (HTTP service; see README)");
+            err.println("   or: java -jar glyph.jar <font.ttf> \"<text>\" <out.png> [sizePx]");
             return 2;
         }
         RenderOptions d = RenderOptions.defaults();

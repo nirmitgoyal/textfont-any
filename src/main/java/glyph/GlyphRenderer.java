@@ -13,6 +13,12 @@ public final class GlyphRenderer {
 
     public static BufferedImage render(Path fontFile, String text, RenderOptions opts) throws IOException {
         Objects.requireNonNull(fontFile, "fontFile");
+        return render(FontFace.load(fontFile), text, opts, Long.MAX_VALUE);
+    }
+
+    /** Render with an already-loaded font (immutable, safe to share across threads) and a pixel budget. */
+    public static BufferedImage render(FontFace face, String text, RenderOptions opts, long maxPixels) {
+        Objects.requireNonNull(face, "face");
         Objects.requireNonNull(text, "text must not be null");
         Objects.requireNonNull(opts, "opts");
         if (text.isEmpty()) {
@@ -24,8 +30,7 @@ public final class GlyphRenderer {
         if (text.indexOf('\n') >= 0 || text.indexOf('\r') >= 0) {
             throw new IllegalArgumentException("single line only");
         }
-        FontFace face = FontFace.load(fontFile);
-        Layout layout = Layout.of(face, text, opts);
+        Layout layout = Layout.of(face, text, opts, maxPixels);
         Bitmap bitmap = new Bitmap(layout.width(), layout.height());
         for (Layout.PlacedGlyph g : layout.glyphs()) {
             Rasterizer.fillOutline(bitmap, face.outline(g.gid()).toPixels(layout.scale(), g.penX(), layout.baselineY()));
@@ -36,5 +41,10 @@ public final class GlyphRenderer {
     public static void renderToPng(Path fontFile, String text, RenderOptions opts, OutputStream out) throws IOException {
         BufferedImage img = render(fontFile, text, opts);
         PngWriter.write(img, out);
+    }
+
+    public static void renderToPng(FontFace face, String text, RenderOptions opts, long maxPixels,
+                                   OutputStream out) throws IOException {
+        PngWriter.write(render(face, text, opts, maxPixels), out);
     }
 }

@@ -29,3 +29,57 @@ java -jar target/glyph.jar fonts/DejaVuSans.ttf "Hello, glyph!" target/out/cli.p
 ```
 
 Exit codes: 0 success, 1 error, 2 bad usage.
+
+## Running the service
+
+```
+mvn -q package -DskipTests
+java -jar target/glyph.jar serve
+```
+
+Listens on `127.0.0.1:8080` by default (no auth yet, so loopback only; set `HOST=0.0.0.0` to expose it).
+All config is environment variables:
+
+| Var | Default | Meaning |
+|-----|---------|---------|
+| `HOST` / `PORT` | `127.0.0.1` / `8080` | Bind address |
+| `FONT_DIR` | `fonts` | Every `*.ttf` here is loaded at startup and addressed by file name without `.ttf`. Bad font or empty dir = startup fails. |
+| `MAX_CONCURRENT_RENDERS` | CPU cores | Renders running at once |
+| `QUEUE_WAIT_MS` | `500` | How long a request waits for a render slot before getting `503` + `Retry-After: 1` |
+| `CACHE_MB` | `64` | LRU of encoded PNGs (`0` disables) |
+| `MAX_PIXELS` | `4000000` | Largest canvas a request may produce |
+
+### API
+
+`GET /v1/render?font=DejaVuSans&text=Hello%2C+glyph%21` returns `image/png`.
+
+| Param | Required | Default | Rules |
+|-------|----------|---------|-------|
+| `font` | yes | | A name from `/v1/fonts`. Never a path. |
+| `text` | yes | | UTF-8, percent-encoded, 1-1000 code points, single line |
+| `size` | no | `64` | integer px per em, 4-512 |
+| `padding` | no | `8` | integer px, 0-256 |
+| `ink`, `bg` | no | `000000`, `ffffff` | `RRGGBB` or `RRGGBBAA`, no `#` (`bg=00000000` is transparent) |
+
+Unknown or repeated params are rejected, so typos fail loudly. Responses carry `ETag` and
+`Cache-Control: public, max-age=3600`; send `If-None-Match` to get a body-less `304`. Output is
+deterministic, so results are safe to cache downstream.
+
+Other routes: `GET /v1/fonts`, `GET /healthz` (liveness), `GET /readyz` (readiness; `503` while draining),
+`GET /metrics` (Prometheus text).
+
+Errors are JSON: `{"error":{"code":"...","message":"...","request_id":"..."}}`. Branch on `code`, not `message`.
+
+| Status | Codes |
+|--------|-------|
+| 400 | `missing_param` `invalid_param` `unknown_param` `duplicate_param` `invalid_text` `invalid_encoding` `canvas_too_large` |
+| 404 | `unknown_font` `not_found` |
+| 405 | `method_not_allowed` |
+| 503 | `overloaded` (retry after `Retry-After` seconds) |
+| 500 | `internal` (quote `request_id` when reporting) |
+
+Every response has `X-Request-Id` (a valid incoming one is echoed). One access-log line per request goes to
+stdout. Request text is never logged.
+
+Measured on a laptop (10+ cores, DejaVu fonts): ~27k req/s on cache hits, ~3k req/s on small uncached
+renders, ~125 req/s on near-maximum 400px renders (single render worst case ~170 ms).
