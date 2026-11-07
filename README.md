@@ -12,22 +12,20 @@ You have two jobs.
 
 We care more about your judgment on what to tackle first than about a long list of half-finished features.
 
-## Time
 
-Aim for **60 minutes**. This is practice, so going over is fine, but your submission records exactly how long you took, and that time factors into the evaluation.
+## Running the core
 
-## Tools
+Build and test:
 
-Use whatever you'd use day to day. AI assistants (Cursor, Copilot, ChatGPT, Claude), search, library docs, Stack Overflow. Anything goes. We want to see how you actually work, not how you perform without your normal tooling.
+```
+mvn -q test
+mvn -q package -DskipTests
+```
 
-## Building it
+Render text to a PNG (optional last arg is size in px, 4-512, default 64):
 
-This repo starts nearly empty — just this README and a `fonts/` folder with a few TTFs to render — so you're starting from close to a blank page. Set it up in whatever language and framework you like, using your own toolchain (your own package manager, test runner, and build commands).
+```
+java -jar target/glyph.jar fonts/DejaVuSans.ttf "Hello, glyph!" target/out/cli.png 48
+```
 
-When you're done, run `npx @hellointerview/ai-coding submit` to submit your code.
-
-## Git
-
-This is a regular git repo, so use git however you like. Commit as you go, make branches, do whatever fits how you normally work. It won't get in the way and we're not going to fight your workflow.
-
-The one thing to know is there's nowhere to push. When you run `npx @hellointerview/ai-coding submit` we bundle up your work and submit it for you, so commits are just for your own benefit, not how you turn the exercise in. Your full set of changes is included either way, whether you committed them or not.
+Exit codes: 0 success, 1 error, 2 bad usage.
